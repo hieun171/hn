@@ -85,13 +85,27 @@ app.use(limiter);
 // ---------- Local Postgres (dev client) ----------
 // Local Postgres (dev client)
 // ============================
-const db = new pg.Client({
-  user: process.env.PG_USER,
-  host: process.env.PG_HOST,
-  database: process.env.PG_DATABASE,
-  password: process.env.PG_PASSWORD,
-  port: process.env.PG_PORT,
+//const db = new pg.Client({
+//  user: process.env.PG_USER,
+//  host: process.env.PG_HOST,
+//  database: process.env.PG_DATABASE,
+//  password: process.env.PG_PASSWORD,
+//  port: process.env.PG_PORT,
+//});
+// ---------- Postgres (deploy client) ----------
+import pkg from "pg";
+const { Client } = pkg;
+
+const db = new Client({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }, // ✅ Railway requires SSL
 });
+
+db.connect()
+  .then(() => console.log("🚀 Connected to Railway Postgres"))
+  .catch((err) => console.error("❌ Railway Postgres connection error:", err));
+
+// ---------- Postgres (dev client) ----------
 
 db.connect().catch((err) => {
   console.error("Local Postgres connection error:", err);
