@@ -4,6 +4,11 @@
 //
 //
 //// server.js (DEV version — keep your original logic, add logout + rate limit + helpful comments)
+// ============================================================
+// server.js - Full app with local + Railway Postgres
+// ============================================================
+
+/// server.js (DEV version — keep your original logic, add logout + rate limit + helpful comments)
 // ------------------------------------------------------------------
 // Purpose: Development-friendly version of your app. Not hardened for production.
 // When ready to go-live, follow the "GO-LIVE CHECKLIST" comments at the bottom.
