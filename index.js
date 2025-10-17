@@ -17,6 +17,7 @@ import session from "express-session";
 import passport from "passport";
 import { Strategy } from "passport-local";
 import env from "dotenv";
+import dotenv from "dotenv";
 import path from "path";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
@@ -28,7 +29,8 @@ import nodemailer from "nodemailer";
 // NOTE: In this DEV file we do NOT enable helmet/compression/connect-pg-simple etc.
 // Those are listed in the GO-LIVE notes below.
 
-env.config(); // load .env
+//env.config(); // load .env
+dotenv.config();
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
@@ -75,6 +77,9 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // ---------- Postgres (dev client) ----------
+// ---------- Local Postgres (dev client) ----------
+// Local Postgres (dev client)
+// ============================
 const db = new pg.Client({
   user: process.env.PG_USER,
   host: process.env.PG_HOST,
@@ -82,9 +87,56 @@ const db = new pg.Client({
   password: process.env.PG_PASSWORD,
   port: process.env.PG_PORT,
 });
+
 db.connect().catch((err) => {
-  console.error("Postgres connection error:", err);
+  console.error("Local Postgres connection error:", err);
 });
+
+// Optional: test local connection
+db.query("SELECT NOW()", (err, res) => {
+  if (err) console.error("Local Postgres query error:", err);
+  else console.log("Local Postgres connected! Current time:", res.rows[0]);
+});
+
+// Example query for local DB
+db.query("SELECT * FROM my_user", (err, res) => {
+  if (err) console.error("Local query error:", err);
+  else console.log("Local my_user rows:", res.rows);
+});
+
+// ============================
+// Railway Postgres (production client)
+// ============================
+const prodDb = new pg.Client({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }, // required for Railway
+});
+
+prodDb.connect().catch((err) => {
+  console.error("Railway Postgres connection error:", err);
+});
+
+// Optional: test Railway connection
+prodDb.query("SELECT NOW()", (err, res) => {
+  if (err) console.error("Railway Postgres query error:", err);
+  else console.log("Railway Postgres connected! Current time:", res.rows[0]);
+});
+
+// Example query for Railway DB
+prodDb.query("SELECT * FROM my_user", (err, res) => {
+  if (err) console.error("Railway query error:", err);
+  else console.log("Railway my_user rows:", res.rows);
+});
+
+// ============================
+// Notes
+// ============================
+// 1. Local DB (db) works exactly as before. Do not touch local code.
+// 2. Railway DB (prodDb) is separate, only used for production.
+// 3. No import/export inside this file → avoids circular references.
+// 4. Push updates to GitHub → Railway redeploys.
+// 5. Local Postgres data and Railway data remain separate.
+
 //add schedule delete at midnigth
 // WHERE created_at < NOW() - INTERVAL '2 days' not work table do not have now
 
@@ -124,6 +176,11 @@ app.get("/", (req, res) => {
   const today = new Date().toISOString().split("T")[0];
   res.render("index.ejs", { defaultDate: today });
 });
+//test real web
+//app.get("/", (req, res) => {
+// res.send("Welcome to Hieunc.com!");
+//});
+//test real web
 
 // About
 app.get("/about", (req, res) => {
